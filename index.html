@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Supply Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><a href="index.html" id="headerTitle">Mobile Supply Manager</a></h1>
+            <a href="settings.html" class="settings-btn" id="settingsBtn">Settings</a>
+        </header>
+
+        <div id="messageContainer"></div>
+
+        <div class="card">
+            <div id="welcomeMessage"></div>
+            <div style="margin-bottom: 10px;">
+                <button class="btn btn-primary" id="addItemBtn" onclick="showAddItemModal()">+ Add New Item</button>
+            </div>
+            <div id="itemsList"></div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="addItemModal" class="modal">
+        <div class="modal-content" id="addItemModalContent" style="transition: background 0.3s;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="addItemTitle">Add New Item</h2>
+                <button class="close" onclick="closeAddItemModal()" id="closeAddItem">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="itemName" id="itemNameLabel">Item Name:</label>
+                <input type="text" id="itemName" maxlength="64">
+            </div>
+            <div class="form-group">
+                <label id="backgroundColorLabel">Background Color:</label>
+                <div class="color-swatches">
+                    <div class="color-swatch" style="background: #111;" data-color="#111"></div>
+                    <div class="color-swatch selected" style="background: #EEE;" data-color="#EEE"></div>
+                    <div class="color-swatch" style="background: #ffadad;" data-color="#ffadad"></div>
+                    <div class="color-swatch" style="background: #ffd6a5;" data-color="#ffd6a5"></div>
+                    <div class="color-swatch" style="background: #fdffb6;" data-color="#fdffb6"></div>
+                    <div class="color-swatch" style="background: #caffbf;" data-color="#caffbf"></div>
+                    <div class="color-swatch" style="background: #9bf6ff;" data-color="#9bf6ff"></div>
+                    <div class="color-swatch" style="background: #a0c4ff;" data-color="#a0c4ff"></div>
+                    <div class="color-swatch" style="background: #bdb2ff;" data-color="#bdb2ff"></div>
+                    <div class="color-swatch" style="background: #ffc6ff;" data-color="#ffc6ff"></div>
+                </div>
+                <input type="hidden" id="itemColor" value="#EEE">
+            </div>
+            <button class="btn btn-primary" onclick="createItem()" id="createItemBtn">Create Item</button>
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="purchaseTitle">Purchase Items</h2>
+                <button class="close" onclick="closePurchaseModal()">&times;</button>
+            </div>
+            <input type="hidden" id="purchaseItemName">
+            <div class="form-group">
+                <label for="purchaseQuantity" id="purchaseQuantityLabel">Number of Items:</label>
+                <input type="number" id="purchaseQuantity" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label for="purchasePrice" id="purchasePriceLabel">Price per Item:</label>
+                <input type="number" id="purchasePrice" step="0.01" min="0" value="0">
+            </div>
+            <div class="form-info" id="purchaseTotalPrice">Total: 0.00</div>
+            <div class="form-group">
+                <label for="purchaseDate" id="purchaseDateLabel">Purchase Date and Time:</label>
+                <input type="datetime-local" id="purchaseDate" step="1">
+            </div>
+            <div class="form-group">
+                <label for="purchaseStore" id="purchaseStoreLabel">Store Name:</label>
+                <input type="text" id="purchaseStore" maxlength="64">
+            </div>
+            <button class="btn btn-success" onclick="confirmPurchase()" id="addPurchaseBtn">Add Purchase</button>
+        </div>
+    </div>
+
+    <!-- Consume Modal -->
+    <div id="consumeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="consumeTitle">Consume Items</h2>
+                <button class="close" onclick="closeConsumeModal()">&times;</button>
+            </div>
+            <input type="hidden" id="consumeItemName">
+            <input type="hidden" id="consumeQuantity">
+            <div id="priceSelectionContent"></div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="renameTitle">Rename Item</h2>
+                <button class="close" onclick="closeRenameModal()">&times;</button>
+            </div>
+            <input type="hidden" id="renameOldName">
+            <div class="form-group">
+                <label for="renameNewName" id="renameNewNameLabel">New Name:</label>
+                <input type="text" id="renameNewName" maxlength="64">
+            </div>
+            <button class="btn btn-primary" onclick="confirmRename()" id="renameBtn">Rename</button>
+        </div>
+    </div>
+
+    <!-- Change Color Modal -->
+    <div id="changeColorModal" class="modal">
+        <div class="modal-content" id="changeColorModalContent" style="transition: background 0.3s;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="changeColorTitle">Change Background Color</h2>
+                <button class="close" onclick="closeChangeColorModal()">&times;</button>
+            </div>
+            <input type="hidden" id="changeColorItemName">
+            <div class="form-group">
+                <label id="changeColorLabel">Background Color:</label>
+                <div class="color-swatches" id="changeColorSwatches">
+                    <div class="color-swatch" style="background: #111;" data-color="#111"></div>
+                    <div class="color-swatch" style="background: #EEE;" data-color="#EEE"></div>
+                    <div class="color-swatch" style="background: #ffadad;" data-color="#ffadad"></div>
+                    <div class="color-swatch" style="background: #ffd6a5;" data-color="#ffd6a5"></div>
+                    <div class="color-swatch" style="background: #fdffb6;" data-color="#fdffb6"></div>
+                    <div class="color-swatch" style="background: #caffbf;" data-color="#caffbf"></div>
+                    <div class="color-swatch" style="background: #9bf6ff;" data-color="#9bf6ff"></div>
+                    <div class="color-swatch" style="background: #a0c4ff;" data-color="#a0c4ff"></div>
+                    <div class="color-swatch" style="background: #bdb2ff;" data-color="#bdb2ff"></div>
+                    <div class="color-swatch" style="background: #ffc6ff;" data-color="#ffc6ff"></div>
+                </div>
+                <input type="hidden" id="changeColorValue">
+            </div>
+            <button class="btn btn-primary" onclick="confirmChangeColor()" id="changeColorBtn">Change Color</button>
+        </div>
+    </div>
+
+    <script src="storage.js"></script>
+    <script src="translations.js"></script>
+    <script>
+        applyColorScheme();
+        updateAllTexts();
+
+        function updateAllTexts() {
+            document.getElementById('headerTitle').textContent = t('appTitle');
+            document.getElementById('settingsBtn').textContent = t('settings');
+            document.getElementById('addItemBtn').textContent = t('addNewItem');
+            document.getElementById('addItemTitle').textContent = t('addItemTitle');
+            document.getElementById('itemNameLabel').textContent = t('itemName');
+            document.getElementById('itemName').placeholder = t('itemNamePlaceholder');
+            document.getElementById('backgroundColorLabel').textContent = t('backgroundColorLabel');
+            document.getElementById('createItemBtn').textContent = t('createItem');
+            document.getElementById('purchaseTitle').textContent = t('purchaseItemsTitle');
+            document.getElementById('purchaseQuantityLabel').textContent = t('numberOfItems');
+            document.getElementById('purchasePriceLabel').textContent = t('pricePerItem');
+            document.getElementById('purchaseDateLabel').textContent = t('purchaseDateTime');
+            document.getElementById('purchaseStoreLabel').textContent = t('storeName');
+            document.getElementById('addPurchaseBtn').textContent = t('addPurchase');
+            document.getElementById('consumeTitle').textContent = t('consumeItemsTitle');
+            document.getElementById('renameTitle').textContent = t('renameItemTitle');
+            document.getElementById('renameNewNameLabel').textContent = t('newName');
+            document.getElementById('renameBtn').textContent = t('renameButton');
+            document.getElementById('changeColorTitle').textContent = t('changeColorTitle');
+            document.getElementById('changeColorLabel').textContent = t('backgroundColorLabel');
+            document.getElementById('changeColorBtn').textContent = t('changeColorButton');
+        }
+
+        function loadItems() {
+            const items = getAllItems();
+            const settings = getSettings();
+            const itemsList = document.getElementById('itemsList');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            if (items.length === 0) {
+                welcomeMessage.innerHTML = `<div class="message message-info">${t('welcomeMessage')}</div>`;
+                itemsList.innerHTML = '';
+                return;
+            }
+            
+            welcomeMessage.innerHTML = '';
+            
+            itemsList.innerHTML = items.map(item => {
+                const stock = getStock(item.name);
+                const hasStock = stock.totalQuantity > 0;
+                
+                return `
+                    <div class="item-card" style="background: ${item.color};">
+                        <div class="item-header">
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            <div class="item-stock-info" data-item="${item.name}">
+                                <div class="item-stock">${stock.totalQuantity} ${t('items')}</div>
+                                <div class="item-value">${settings.currency}${stock.totalValue.toFixed(2)} (${t('avg')}: ${settings.currency}${stock.averagePrice.toFixed(2)})</div>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-danger" onclick="consumeOne('${escapeHtml(item.name)}')" ${!hasStock ? 'disabled' : ''}>${t('useOne')}</button>
+                            <button class="btn btn-danger" onclick="consumeMore('${escapeHtml(item.name)}')" ${!hasStock ? 'disabled' : ''}>${t('useMore')}</button>
+                            <button class="btn btn-success" onclick="openPurchaseModal('${escapeHtml(item.name)}')">${t('purchase')}</button>
+                            <button class="btn btn-primary" onclick="viewHistory('${escapeHtml(item.name)}')">${t('history')}</button>
+                        </div>
+                        <div class="more-section">
+                            <div class="more-toggle" onclick="toggleMore(this)">${t('moreWithDots')}</div>
+                            <div class="more-content">
+                                <button class="btn btn-warning" onclick="openRenameModal('${escapeHtml(item.name)}')">${t('rename')}</button>
+                                <button class="btn btn-warning" onclick="openChangeColorModal('${escapeHtml(item.name)}')">${t('backgroundColor')}</button>
+                                <button class="btn btn-danger" onclick="confirmDeleteItem('${escapeHtml(item.name)}')">${t('delete')}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toggleMore(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('show');
+            element.textContent = content.classList.contains('show') ? t('less') : t('moreWithDots');
+        }
+
+        // ===== ADD ITEM =====
+        
+        function showAddItemModal() {
+            document.getElementById('addItemModal').classList.add('show');
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemColor').value = '#EEE';
+            document.getElementById('addItemModalContent').style.background = '#EEE';
+            
+            document.querySelectorAll('#addItemModal .color-swatch').forEach(swatch => {
+                swatch.classList.remove('selected');
+                if (swatch.dataset.color === '#EEE') {
+                    swatch.classList.add('selected');
+                }
+            });
+        }
+
+        function closeAddItemModal() {
+            document.getElementById('addItemModal').classList.remove('show');
+        }
+
+        document.querySelectorAll('#addItemModal .color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                document.querySelectorAll('#addItemModal .color-swatch').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                const color = this.dataset.color;
+                document.getElementById('itemColor').value = color;
+                document.getElementById('addItemModalContent').style.background = color;
+            });
+        });
+
+        function createItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const color = document.getElementById('itemColor').value;
+            
+            if (!name) {
+                alert(t('enterItemName'));
+                return;
+            }
+            
+            const result = addItem(name, color);
+            if (result.success) {
+                closeAddItemModal();
+                loadItems();
+            } else {
+                alert(t('itemAlreadyExists'));
+            }
+        }
+
+        // ===== PURCHASE =====
+        
+        function openPurchaseModal(itemName) {
+            document.getElementById('purchaseItemName').value = itemName;
+            document.getElementById('purchaseModal').classList.add('show');
+            
+            const lastPurchase = getLastPurchaseInfo(itemName);
+            if (lastPurchase) {
+                document.getElementById('purchasePrice').value = lastPurchase.pricePerItem;
+                document.getElementById('purchaseStore').value = lastPurchase.storeName || '';
+            } else {
+                document.getElementById('purchasePrice').value = '0';
+                document.getElementById('purchaseStore').value = '';
+            }
+            
+            document.getElementById('purchaseQuantity').value = '1';
+            
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('purchaseDate').value = now.toISOString().slice(0, 19);
+            
+            updatePurchaseTotal();
+        }
+
+        function closePurchaseModal() {
+            document.getElementById('purchaseModal').classList.remove('show');
+        }
+
+        function updatePurchaseTotal() {
+            const quantity = parseInt(document.getElementById('purchaseQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('purchasePrice').value) || 0;
+            const settings = getSettings();
+            document.getElementById('purchaseTotalPrice').textContent = 
+                `${t('total')}: ${settings.currency}${(quantity * price).toFixed(2)}`;
+        }
+
+        document.getElementById('purchaseQuantity').addEventListener('input', updatePurchaseTotal);
+        document.getElementById('purchasePrice').addEventListener('input', updatePurchaseTotal);
+
+        function confirmPurchase() {
+            const itemName = document.getElementById('purchaseItemName').value;
+            const quantity = parseInt(document.getElementById('purchaseQuantity').value);
+            const price = parseFloat(document.getElementById('purchasePrice').value);
+            const datetime = document.getElementById('purchaseDate').value;
+            const store = document.getElementById('purchaseStore').value.trim();
+            
+            if (!quantity || quantity <= 0) {
+                alert(t('enterValidQuantity'));
+                return;
+            }
+            
+            if (price === 0) {
+                if (!confirm(t('freeItemConfirm'))) {
+                    return;
+                }
+            }
+            
+            addPurchase(itemName, quantity, price, datetime, store);
+            closePurchaseModal();
+            loadItems();
+        }
+
+        // ===== CONSUME =====
+        
+        function consumeOne(itemName) {
+            const stock = getStock(itemName);
+            
+            if (stock.totalQuantity === 0) {
+                alert(t('noItemsInStock'));
+                return;
+            }
+            
+            // Check if this is the last item
+            if (stock.totalQuantity === 1) {
+                if (!confirm(t('stockEmptyConfirm'))) {
+                    return;
+                }
+            }
+            
+            if (stock.stockByPrice.length === 1) {
+                const priceInfo = stock.stockByPrice[0];
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const datetime = now.toISOString().slice(0, 19);
+                addConsumption(itemName, 1, priceInfo.pricePerItem, datetime, priceInfo.storeName);
+                loadItems();
+            } else {
+                openConsumeModal(itemName, 1);
+            }
+        }
+
+        function consumeMore(itemName) {
+            const stock = getStock(itemName);
+            
+            if (stock.totalQuantity === 0) {
+                alert(t('noItemsInStock'));
+                return;
+            }
+            
+            const quantity = prompt(t('howManyConsume') + stock.totalQuantity + ')');
+            if (!quantity || isNaN(quantity) || parseInt(quantity) <= 0) {
+                return;
+            }
+            
+            const qty = parseInt(quantity);
+            if (qty > stock.totalQuantity) {
+                alert(t('notEnoughItems'));
+                return;
+            }
+            
+            // Check if this will empty the stock
+            if (qty === stock.totalQuantity) {
+                if (!confirm(t('stockEmptyConfirm'))) {
+                    return;
+                }
+            }
+            
+            if (stock.stockByPrice.length === 1) {
+                const priceInfo = stock.stockByPrice[0];
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                const datetime = now.toISOString().slice(0, 19);
+                addConsumption(itemName, qty, priceInfo.pricePerItem, datetime, priceInfo.storeName);
+                loadItems();
+            } else {
+                openConsumeModal(itemName, qty);
+            }
+        }
+
+        function openConsumeModal(itemName, quantity) {
+            document.getElementById('consumeItemName').value = itemName;
+            document.getElementById('consumeQuantity').value = quantity;
+            document.getElementById('consumeModal').classList.add('show');
+            
+            const stock = getStock(itemName);
+            const settings = getSettings();
+            const content = document.getElementById('priceSelectionContent');
+            
+            content.innerHTML = `
+                <p>${t('selectPrice')} (${quantity} ${t('items')}):</p>
+                ${stock.stockByPrice.map((priceInfo, index) => `
+                    <div class="price-option" onclick="selectPriceForConsume(${priceInfo.pricePerItem}, '${escapeHtml(priceInfo.storeName || '')}')">
+                        <div>
+                            <strong>${settings.currency}${priceInfo.pricePerItem.toFixed(2)}</strong> ${t('perItem')}
+                            ${priceInfo.storeName ? `<br><small>${t('from')} ${priceInfo.storeName}</small>` : ''}
+                        </div>
+                        <div>${priceInfo.quantity} ${t('available')}</div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function selectPriceForConsume(pricePerItem, storeName) {
+            const itemName = document.getElementById('consumeItemName').value;
+            const quantity = parseInt(document.getElementById('consumeQuantity').value);
+            
+            const check = canConsumeAtPrice(itemName, quantity, pricePerItem);
+            if (!check.success) {
+                alert(t('cannotRemoveAtPrice'));
+                return;
+            }
+            
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const datetime = now.toISOString().slice(0, 19);
+            addConsumption(itemName, quantity, pricePerItem, datetime, storeName);
+            closeConsumeModal();
+            loadItems();
+        }
+
+        function closeConsumeModal() {
+            document.getElementById('consumeModal').classList.remove('show');
+        }
+
+        // ===== RENAME =====
+        
+        function openRenameModal(itemName) {
+            document.getElementById('renameOldName').value = itemName;
+            document.getElementById('renameNewName').value = itemName;
+            document.getElementById('renameModal').classList.add('show');
+        }
+
+        function closeRenameModal() {
+            document.getElementById('renameModal').classList.remove('show');
+        }
+
+        function confirmRename() {
+            const oldName = document.getElementById('renameOldName').value;
+            const newName = document.getElementById('renameNewName').value.trim();
+            
+            if (!newName) {
+                alert(t('enterNewName'));
+                return;
+            }
+            
+            const result = renameItem(oldName, newName);
+            if (result.success) {
+                closeRenameModal();
+                loadItems();
+            } else {
+                alert(t('itemNameExists'));
+            }
+        }
+
+        // ===== CHANGE COLOR =====
+        
+        function openChangeColorModal(itemName) {
+            const item = getItem(itemName);
+            document.getElementById('changeColorItemName').value = itemName;
+            document.getElementById('changeColorValue').value = item.color;
+            document.getElementById('changeColorModalContent').style.background = item.color;
+            document.getElementById('changeColorModal').classList.add('show');
+            
+            document.querySelectorAll('#changeColorSwatches .color-swatch').forEach(swatch => {
+                swatch.classList.remove('selected');
+                if (swatch.dataset.color === item.color) {
+                    swatch.classList.add('selected');
+                }
+            });
+        }
+
+        function closeChangeColorModal() {
+            document.getElementById('changeColorModal').classList.remove('show');
+        }
+
+        document.querySelectorAll('#changeColorSwatches .color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                document.querySelectorAll('#changeColorSwatches .color-swatch').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                const color = this.dataset.color;
+                document.getElementById('changeColorValue').value = color;
+                document.getElementById('changeColorModalContent').style.background = color;
+            });
+        });
+
+        function confirmChangeColor() {
+            const itemName = document.getElementById('changeColorItemName').value;
+            const newColor = document.getElementById('changeColorValue').value;
+            
+            changeItemColor(itemName, newColor);
+            closeChangeColorModal();
+            loadItems();
+        }
+
+        // ===== DELETE =====
+        
+        function confirmDeleteItem(itemName) {
+            if (confirm(t('deleteConfirm', itemName))) {
+                deleteItem(itemName);
+                loadItems();
+            }
+        }
+
+        // ===== VIEW HISTORY =====
+        
+        function viewHistory(itemName) {
+            window.location.href = `history.html#item=${encodeURIComponent(itemName)}`;
+        }
+
+        loadItems();
+    </script>
+</body>
+</html>

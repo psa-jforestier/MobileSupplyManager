@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Mobile Supply Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-btn" id="backBtn">Back</a>
+            <h1 id="headerTitle">History</h1>
+        </header>
+
+        <div class="card">
+            <div id="historyContent"></div>
+        </div>
+    </div>
+
+    <script src="storage.js"></script>
+    <script src="translations.js"></script>
+    <script>
+        applyColorScheme();
+
+        function getQueryParam(param) {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            return params.get(param);
+        }
+
+        function loadHistory() {
+            const itemName = getQueryParam('item');
+            
+            if (!itemName) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const item = getItem(itemName);
+            if (!item) {
+                alert(t('itemNotFound'));
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Update header with item name
+            document.getElementById('backBtn').textContent = t('back');
+            document.getElementById('headerTitle').textContent = `${t('history')}: ${itemName}`;
+            
+            // Apply item background color
+            if (item.color) {
+                document.body.style.backgroundColor = item.color;
+            }
+            
+            const stock = getStock(itemName);
+            const history = getHistory(itemName);
+            const settings = getSettings();
+            const historyContent = document.getElementById('historyContent');
+            
+            // Add stock summary at the top
+            const stockSummaryHTML = `
+                <div class="item-stock-info" style="margin-bottom: 20px;">
+                    <div class="stock-row">
+                        <span>${t('currentStock')}:</span>
+                        <span class="stock-value">${stock.totalQuantity} ${t('items')}</span>
+                    </div>
+                    <div class="stock-row">
+                        <span>${t('totalValue')}:</span>
+                        <span class="stock-value">${settings.currency}${stock.totalValue.toFixed(2)}</span>
+                    </div>
+                    <div class="stock-row">
+                        <span>${t('avgPrice')}:</span>
+                        <span class="stock-value">${settings.currency}${stock.averagePrice.toFixed(2)}</span>
+                    </div>
+                </div>
+            `;
+            
+            if (history.length === 0) {
+                historyContent.innerHTML = stockSummaryHTML + `<p style="text-align: center; color: #999; padding: 20px;">${t('noHistory')}</p>`;
+                return;
+            }
+            
+            historyContent.innerHTML = stockSummaryHTML + `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>${t('dateTime')}</th>
+                            <th>${t('action')}</th>
+                            <th class="text-right">${t('quantity')}</th>
+                            <th class="text-right">${t('pricePerItemShort')}</th>
+                            <th>${t('store')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${history.map(h => {
+                            const dateStr = h.action === 'Purchase' 
+                                ? new Date(h.datetime).toLocaleString()
+                                : (h.datetime ? new Date(h.datetime).toLocaleString() : new Date(h.date).toLocaleDateString());
+                            
+                            return `
+                                <tr>
+                                    <td>${dateStr}</td>
+                                    <td>${h.action === 'Purchase' ? t('actionPurchase') : t('actionConsume')}</td>
+                                    <td class="text-right">${h.quantity}</td>
+                                    <td class="text-right">${settings.currency}${h.pricePerItem.toFixed(2)}</td>
+                                    <td>${h.storeName || '-'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>

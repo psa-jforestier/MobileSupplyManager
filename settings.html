@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Mobile Supply Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- QR generation library (qrcodejs) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- QR scanning library -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <!-- Gzip compression library -->
+    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-btn" id="backBtn">Back</a>
+            <h1 id="headerTitle">Settings</h1>
+        </header>
+
+        <div id="messageContainer"></div>
+
+        <div class="card">
+            <h2 id="generalSettingsTitle">General Settings</h2>
+            
+            <div class="form-group">
+                <label for="currency" id="currencyLabel">Currency:</label>
+                <select id="currency">
+                    <option value="€" id="currencyEuro">€ (Euro)</option>
+                    <option value="$" id="currencyDollar">$ (Dollar)</option>
+                    <option value="£" id="currencyPound">£ (Pound)</option>
+                    <option value="" id="currencyNone">None</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="language" id="languageLabel">Language:</label>
+                <select id="language" onchange="onLanguageChange()">
+                    <option value="EN" id="languageEN">English</option>
+                    <option value="FR" id="languageFR">Français</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="colorScheme" id="colorSchemeLabel">Color Scheme:</label>
+                <select id="colorScheme">
+                    <option value="system" id="colorSchemeSystem">System Preference</option>
+                    <option value="light" id="colorSchemeLight">Light</option>
+                    <option value="dark" id="colorSchemeDark">Dark</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSettings()" id="saveSettingsBtn">Save Settings</button>
+            <span id="inlineMessage"></span>
+        </div>
+
+        <div class="card">
+            <h2 id="dataManagementTitle">Data Management</h2>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-success" onclick="exportDataToFile()" id="exportBtn">Export Data</button>
+                <p class="form-info" id="exportInfo">Download all your data as a JSON file for backup</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-success" onclick="exportDataToQR()" id="exportQRBtn">Export Data to QR</button>
+                <p class="form-info" id="exportQRInfo">Generate a QR code containing all your data</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-warning" onclick="triggerImport()" id="importBtn">Import Data</button>
+                <p class="form-info" id="importWarning">⚠️ Warning: This will replace all existing data</p>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-warning" onclick="importDataFromQR()" id="importQRBtn">Import Data from QR</button>
+                <p class="form-info" id="importQRInfo">Scan a QR code to import data</p>
+            </div>
+
+            <div>
+                <button class="btn btn-danger" onclick="confirmClearData()" id="clearBtn">Clear All Data</button>
+                <p class="form-info" id="clearWarning">⚠️ Warning: This will permanently delete all your data</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="storage.js"></script>
+    <script src="translations.js"></script>
+    <script>
+        applyColorScheme();
+        updateAllTexts();
+
+        function updateAllTexts() {
+            document.getElementById('backBtn').textContent = t('back');
+            document.getElementById('headerTitle').textContent = t('settingsTitle');
+            document.getElementById('generalSettingsTitle').textContent = t('generalSettings');
+            document.getElementById('currencyLabel').textContent = t('currency');
+            document.getElementById('currencyEuro').textContent = t('currencyEuro');
+            document.getElementById('currencyDollar').textContent = t('currencyDollar');
+            document.getElementById('currencyPound').textContent = t('currencyPound');
+            document.getElementById('currencyNone').textContent = t('currencyNone');
+            document.getElementById('languageLabel').textContent = t('language');
+            document.getElementById('languageEN').textContent = t('languageEnglish');
+            document.getElementById('languageFR').textContent = t('languageFrench');
+            document.getElementById('colorSchemeLabel').textContent = t('colorScheme');
+            document.getElementById('colorSchemeSystem').textContent = t('colorSchemeSystem');
+            document.getElementById('colorSchemeLight').textContent = t('colorSchemeLight');
+            document.getElementById('colorSchemeDark').textContent = t('colorSchemeDark');
+            document.getElementById('saveSettingsBtn').textContent = t('saveSettings');
+            document.getElementById('dataManagementTitle').textContent = t('dataManagement');
+            document.getElementById('exportBtn').textContent = t('exportData');
+            document.getElementById('exportInfo').textContent = t('exportInfo');
+            document.getElementById('exportQRBtn').textContent = t('exportDataQR');
+            document.getElementById('exportQRInfo').textContent = t('exportQRInfo');
+            document.getElementById('importBtn').textContent = t('importData');
+            document.getElementById('importWarning').textContent = t('importWarning');
+            document.getElementById('importQRBtn').textContent = t('importDataQR');
+            document.getElementById('importQRInfo').textContent = t('importQRInfo');
+            document.getElementById('clearBtn').textContent = t('clearAllData');
+            document.getElementById('clearWarning').textContent = t('clearWarning');
+        }
+
+        function onLanguageChange() {
+            const language = document.getElementById('language').value;
+            updateSettings({ language: language });
+            updateAllTexts();
+        }
+
+        function loadCurrentSettings() {
+            const settings = getSettings();
+            
+            document.getElementById('currency').value = settings.currency;
+            document.getElementById('language').value = settings.language;
+            document.getElementById('colorScheme').value = settings.colorScheme;
+        }
+
+        function saveSettings() {
+            const currency = document.getElementById('currency').value;
+            const language = document.getElementById('language').value;
+            const colorScheme = document.getElementById('colorScheme').value;
+            
+            updateSettings({ currency, language, colorScheme });
+            
+            showInlineMessage(t('settingsSaved'));
+            applyColorScheme();
+        }
+
+        function showInlineMessage(text) {
+            const inlineMessage = document.getElementById('inlineMessage');
+            inlineMessage.className = 'inline-message success';
+            inlineMessage.textContent = text;
+            
+            setTimeout(() => {
+                inlineMessage.className = '';
+                inlineMessage.textContent = '';
+            }, 3000);
+        }
+
+        function showMessage(text, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.innerHTML = `<div class="message message-${type}">${text}</div>`;
+            
+            setTimeout(() => {
+                messageContainer.innerHTML = '';
+            }, 3000);
+        }
+
+        function exportDataToFile() {
+            const data = exportData();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `supply-manager-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage(t('dataExported'), 'success');
+        }
+
+        function triggerImport() {
+            document.getElementById('importFile').click();
+        }
+
+        document.getElementById('importFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!confirm(t('importConfirm'))) {
+                this.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const result = importData(event.target.result);
+                
+                if (result.success) {
+                    showMessage(t('dataImported'), 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showMessage(t('importError', result.message), 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            this.value = '';
+        });
+
+        function confirmClearData() {
+            if (!confirm(t('clearDataConfirm'))) {
+                return;
+            }
+            
+            if (!confirm(t('clearDataLastChance'))) {
+                return;
+            }
+            
+            clearAllData();
+            showMessage(t('dataCleared'), 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        // QR Code Export
+        function exportDataToQR() {
+            const data = exportData();
+            // Compress data with gzip
+            const compressed = pako.gzip(data);
+            // Convert to base64 safely (avoid Function.apply limits)
+            let binary = '';
+            for (let i = 0; i < compressed.length; i++) {
+                binary += String.fromCharCode(compressed[i]);
+            }
+            const base64 = btoa(binary);
+
+            // Create full-screen overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = t('close');
+            closeBtn.className = 'btn btn-primary';
+            closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px;';
+            closeBtn.onclick = () => document.body.removeChild(overlay);
+
+            const qrContainer = document.createElement('div');
+            qrContainer.style.cssText = 'width: 90%; max-width: 600px;';
+
+            overlay.appendChild(closeBtn);
+            overlay.appendChild(qrContainer);
+            document.body.appendChild(overlay);
+
+            // Generate QR code using qrcodejs
+            const size = Math.min(window.innerWidth * 0.9, 600);
+            new QRCode(qrContainer, {
+                text: base64,
+                width: size,
+                height: size,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+
+        // QR Code Import
+        let qrStream = null;
+        let qrAnimationFrame = null;
+        
+        function importDataFromQR() {
+            // Create full-screen camera overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'qrScanOverlay';
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = t('close');
+            closeBtn.className = 'btn btn-primary';
+            closeBtn.style.cssText = 'position: absolute; top: 20px; right: 20px; z-index: 10001;';
+            closeBtn.onclick = stopQRScanner;
+            
+            const video = document.createElement('video');
+            video.style.cssText = 'max-width: 100%; max-height: 100%;';
+            video.setAttribute('playsinline', true);
+            
+            const canvas = document.createElement('canvas');
+            canvas.style.display = 'none';
+            
+            overlay.appendChild(closeBtn);
+            overlay.appendChild(video);
+            overlay.appendChild(canvas);
+            document.body.appendChild(overlay);
+            
+            // Start camera
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    qrStream = stream;
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    // Start scanning
+                    const ctx = canvas.getContext('2d');
+                    
+                    function scanQR() {
+                        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            
+                            if (code) {
+                                // QR code found
+                                stopQRScanner();
+                                processQRData(code.data);
+                                return;
+                            }
+                        }
+                        qrAnimationFrame = requestAnimationFrame(scanQR);
+                    }
+                    
+                    scanQR();
+                })
+                .catch(err => {
+                    stopQRScanner();
+                    alert(t('cameraAccessError'));
+                });
+        }
+        
+        function stopQRScanner() {
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+            if (qrAnimationFrame) {
+                cancelAnimationFrame(qrAnimationFrame);
+                qrAnimationFrame = null;
+            }
+            const overlay = document.getElementById('qrScanOverlay');
+            if (overlay) {
+                document.body.removeChild(overlay);
+            }
+        }
+        
+        function processQRData(base64Data) {
+            try {
+                // Decode base64
+                const compressed = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                // Decompress
+                const decompressed = pako.ungzip(compressed, { to: 'string' });
+                
+                // Import data
+                const result = importData(decompressed);
+                
+                if (result.success) {
+                    showMessage(t('dataImported'), 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showMessage(t('importError', result.message), 'error');
+                }
+            } catch (err) {
+                showMessage(t('importError', err.message), 'error');
+            }
+        }
+
+        loadCurrentSettings();
+    </script>
+</body>
+</html>
