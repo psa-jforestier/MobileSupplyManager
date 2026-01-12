@@ -11,6 +11,7 @@ The goal of the application is to help a user to manager supply for his house, l
 - The interface must be compact to avoid unnecessary scrolling
 - The interface use flat design, avoid color gradient or color bluring
 - each active button have a solid darker border (width of the border is 1px). The border is darker than the normal color of the button
+- The application icon is "icon.png". It must be used as the favicon, and as the icon of the app when the user use the "add to welcome screen" feature of his browser in a mobile device.
 
 ## Keywords
 - "Item" : the minimal element, for example a "bag of pellet of 15kg". An item have a name (64 char) and also a background color (use to quickly identify them). 
